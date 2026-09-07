@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: outbox-orders
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/orders}
+    username: ${SPRING_DATASOURCE_USERNAME:orders}
+    password: ${SPRING_DATASOURCE_PASSWORD:orders}
+    hikari:
+      pool-name: orders-pool
+      maximum-pool-size: 10
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  jackson:
+    default-property-inclusion: non_null
+
+outbox:
+  batch-size: 100
+  poll-interval: 2s
+  max-batches-per-poll: 10
+  max-attempts: 5
+  backoff-strategy: exponential
+  initial-backoff: 1s
+  max-backoff: 5m
+  scheduler-enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    outbox.events: INFO
+  pattern:
+    correlation: "[${spring.application.name},%X{traceId:-},%X{outboxMessageId:-}] "
